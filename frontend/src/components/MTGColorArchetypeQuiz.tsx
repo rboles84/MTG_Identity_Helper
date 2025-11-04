@@ -403,6 +403,12 @@ const commanderRecommendations: Record<string, CommanderRecommendation> = {
     subtitle: 'Permanent recursion each turn cycle.',
     summary: 'Grind advantage from the graveyard while answering threats.',
   },
+  URG: {
+    identity: 'U R G',
+    title: 'Animar, Soul of Elements',
+    subtitle: 'Creature combo with elemental resilience.',
+    summary: 'Cheat on creature costs and loop value engines to overwhelm the board.',
+  },
   BRG: {
     identity: 'B R G',
     title: 'Korvold, Fae-Cursed King',
