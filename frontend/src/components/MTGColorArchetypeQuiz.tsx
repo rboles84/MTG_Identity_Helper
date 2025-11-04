@@ -429,9 +429,9 @@ const commanderRecommendations: Record<string, CommanderRecommendation> = {
   },
   WUBR: {
     identity: 'W U B R',
-    title: 'Atraxa, Praetors\' Voice (No Green)',
-    subtitle: 'Proliferate control without the forest support.',
-    summary: 'A toolbox shell that leans on counters, planeswalkers, and control.',
+    title: 'Breya, Etherium Shaper',
+    subtitle: 'Artifact combo queen of the shard.',
+    summary: 'Leverage artifacts for flexible removal, token swarms, and explosive combos.',
   },
   WUBG: {
     identity: 'W U B G',
@@ -441,9 +441,9 @@ const commanderRecommendations: Record<string, CommanderRecommendation> = {
   },
   UBRG: {
     identity: 'U B R G',
-    title: 'Omnath, Locus of the Roil',
-    subtitle: 'Elemental mayhem with card advantage built in.',
-    summary: 'Pile up land drops to convert into damage and resources.',
+    title: 'Yidris, Maelstrom Wielder',
+    subtitle: 'Cascade chaos with pinpoint follow-through.',
+    summary: 'Connect in combat to cascade multiple spells and snowball value.',
   },
   WBRG: {
     identity: 'W B R G',
@@ -453,9 +453,9 @@ const commanderRecommendations: Record<string, CommanderRecommendation> = {
   },
   WURG: {
     identity: 'W U R G',
-    title: 'Kykar into Jetmir',
-    subtitle: 'Spellcraft meets go-wide celebrations.',
-    summary: 'Blend noncreature spell velocity with token-based finishers.',
+    title: 'Kynaios and Tiro of Meletis',
+    subtitle: 'Group hug with precise tempo control.',
+    summary: 'Share resources to steer the table while setting up your own finish.',
   },
   FIVE: {
     identity: 'W U B R G',
