@@ -11,10 +11,12 @@ import {
 
 type Color = 'white' | 'blue' | 'black' | 'red' | 'green';
 
+type ChoiceKey = 'A' | 'B' | 'C';
+
 type Choice = {
+  key: ChoiceKey;
   label: string;
   description: string;
-  weights: Partial<Record<Color, number>>;
 };
 
 type Question = {
@@ -67,214 +69,217 @@ const colorDetails: Record<Color, { label: string; gradient: string; description
 
 const questions: Question[] = [
   {
-    id: 'tempo',
-    prompt: 'How do you prefer to set the pace of a Commander game?',
+    id: 'opening_hand',
+    prompt: 'When you fan open an opening hand, what makes you nod with confidence?',
     choices: [
       {
-        label: 'Control the table and ration resources',
-        description: 'Slow things down with removal, stax, and rule-setting enchantments.',
-        weights: { white: 3, blue: 2 },
+        key: 'A',
+        label: 'A. Efficient answers and patient resource development',
+        description: 'You want early interaction and smoothing spells so the game starts on your terms.',
       },
       {
-        label: 'Adapt and counter opponents proactively',
-        description: 'Stay reactive with instants, counterspells, and value engines.',
-        weights: { blue: 3, black: 1 },
+        key: 'B',
+        label: 'B. Card selection and incremental advantages',
+        description: 'Tutors, cantrips, and subtle engines set up the value you plan to harvest later.',
       },
       {
-        label: 'Apply relentless pressure',
-        description: 'Keep opponents on the back foot with damage and combat triggers.',
-        weights: { red: 3, green: 1 },
-      },
-      {
-        label: 'Accelerate into massive threats',
-        description: 'Ramp hard and develop a board that threatens to snowball.',
-        weights: { green: 3, red: 1 },
+        key: 'C',
+        label: 'C. Explosive mana and proactive threats',
+        description: 'Ramp pieces and hard-hitting creatures mean you get to dictate tempo immediately.',
       },
     ],
   },
   {
-    id: 'interaction',
-    prompt: 'Which type of interaction feels most rewarding?',
+    id: 'midgame_plan',
+    prompt: 'As the table develops, how do you like to steer the mid-game?',
     choices: [
       {
-        label: 'Protecting the team',
-        description: 'Flash in solutions, sweep the board, or shield allies.',
-        weights: { white: 3, blue: 1 },
+        key: 'A',
+        label: 'A. Build an efficient board machine',
+        description: 'Tokens, counters, and support effects keep your formation solid and helpful.',
       },
       {
-        label: 'Countermagic and trickery',
-        description: 'Counterspells, bounce, and copying spells mid-stack.',
-        weights: { blue: 3 },
+        key: 'B',
+        label: 'B. Keep the stack lively and unpredictable',
+        description: 'You prefer a flurry of instants and tempo plays that reward quick thinking.',
       },
       {
-        label: 'Targeted removal and sacrifice',
-        description: 'Edicts, kill spells, and reanimation loops.',
-        weights: { black: 3, white: 1 },
-      },
-      {
-        label: 'Burn, fight, and combat tricks',
-        description: 'Direct damage, fight mechanics, and aggressive blowouts.',
-        weights: { red: 2, green: 2 },
+        key: 'C',
+        label: 'C. Pressure life totals relentlessly',
+        description: 'Sacrifice outlets, burn, and aggressive creatures keep everyone on the back foot.',
       },
     ],
   },
   {
-    id: 'resource',
-    prompt: 'How do you generate long-term advantage?',
+    id: 'win_condition',
+    prompt: 'What does a satisfying win look like to you?',
     choices: [
       {
-        label: 'Token swarms and anthem effects',
-        description: 'Create an army and keep it coordinated.',
-        weights: { white: 3, green: 2 },
+        key: 'A',
+        label: 'A. Slowly drain away resistance',
+        description: 'Attrition, taxation, and inevitability grind out the final life points.',
       },
       {
-        label: 'Card draw and tutoring',
-        description: 'Dig for precise answers and maintain card velocity.',
-        weights: { blue: 2, black: 2 },
+        key: 'B',
+        label: 'B. Triumph with coordinated combat',
+        description: 'A disciplined strike team or battalion closes the door with precision swings.',
       },
       {
-        label: 'Graveyard recursion',
-        description: 'Grind value out of the graveyard and drain opponents.',
-        weights: { black: 3, green: 1 },
-      },
-      {
-        label: 'Mana acceleration and ramp',
-        description: 'Explode onto the battlefield with extra lands and mana.',
-        weights: { green: 3, red: 1 },
+        key: 'C',
+        label: 'C. Overwhelm with recursion and growth',
+        description: 'Graveyard engines and resilient threats make removal feel pointless.',
       },
     ],
   },
   {
-    id: 'table',
-    prompt: 'What role do you gravitate toward at a multiplayer table?',
+    id: 'table_politics',
+    prompt: 'Table politics flare up. What is your instinctive move?',
     choices: [
       {
-        label: 'Table sheriff',
-        description: 'Police explosive plays and keep the game fair for everyone.',
-        weights: { white: 3, blue: 1 },
+        key: 'A',
+        label: 'A. Negotiate from a calm position of control',
+        description: 'Offer protection, propose ceasefires, and keep order through diplomacy.',
       },
       {
-        label: 'Scheming mastermind',
-        description: 'Lay traps, accrue inevitability, and strike when it matters.',
-        weights: { blue: 2, black: 2 },
+        key: 'B',
+        label: 'B. Broker deals that advance everyone',
+        description: 'Leverage shared growth, card draw, and collective ramp to earn trust.',
       },
       {
-        label: 'Agent of chaos',
-        description: 'Force action, incite combat, and revel in unpredictability.',
-        weights: { red: 3, blue: 1 },
-      },
-      {
-        label: 'Nature’s champion',
-        description: 'Amplify your board and crash in with overwhelming force.',
-        weights: { green: 3, white: 1 },
+        key: 'C',
+        label: 'C. Wield threats as leverage',
+        description: 'Make it clear that crossing you leads to immediate consequences.',
       },
     ],
   },
   {
-    id: 'wincon',
-    prompt: 'When it’s time to close the game, what feels best?',
+    id: 'problem_solving',
+    prompt: 'A player threatens to combo off. How do you respond?',
     choices: [
       {
-        label: 'Locking the table out',
-        description: 'Assemble a soft lock or pillow-fort while advancing your plan.',
-        weights: { white: 2, blue: 2 },
+        key: 'A',
+        label: 'A. Rally defenses and lock the table down',
+        description: 'Protective permanents and team-wide buffs shield against sudden swings.',
       },
       {
-        label: 'Big spell blowouts',
-        description: 'Storm turns, extra turns, or copying haymakers.',
-        weights: { blue: 2, red: 2 },
+        key: 'B',
+        label: 'B. Dig for precise interaction',
+        description: 'You rely on card selection to find the exact countermeasure you need.',
       },
       {
-        label: 'Drain life totals dry',
-        description: 'Combo kills, aristocrats, and resource denial.',
-        weights: { black: 3, blue: 1 },
-      },
-      {
-        label: 'Combat damage finale',
-        description: 'Overrun effects, double strike, and hasty finishers.',
-        weights: { red: 2, green: 2 },
+        key: 'C',
+        label: 'C. Turn up the pressure immediately',
+        description: 'Force opponents onto the back foot with combat and damage to end the game first.',
       },
     ],
   },
   {
-    id: 'risk',
-    prompt: 'How much risk are you comfortable taking?',
+    id: 'deck_aesthetic',
+    prompt: 'Which deck aesthetic are you most excited to sleeve up?',
     choices: [
       {
-        label: 'Mitigate risk and play the long game',
-        description: 'Redundant answers, protective shields, and measured plays.',
-        weights: { white: 2, blue: 2 },
+        key: 'A',
+        label: 'A. Gothic cathedrals and solemn rituals',
+        description: 'Themes of duty, retribution, and carefully orchestrated order speak to you.',
       },
       {
-        label: 'Calculated gambles',
-        description: 'Tempo swings, counter-wars, and resource exchanges.',
-        weights: { blue: 2, black: 1, red: 1 },
+        key: 'B',
+        label: 'B. Verdant laboratories and living spells',
+        description: 'Organic growth meets arcane experimentation in your ideal deck vibe.',
       },
       {
-        label: 'High risk, high reward',
-        description: 'All-in combos, sacrifice everything for inevitability.',
-        weights: { black: 3, red: 1 },
-      },
-      {
-        label: 'Trust in natural growth',
-        description: 'Invest in board presence and let inevitability happen.',
-        weights: { green: 3, white: 1 },
+        key: 'C',
+        label: 'C. Martial banners and heroic charge',
+        description: 'You love the spectacle of warriors, dragons, and blazing battlefields.',
       },
     ],
   },
   {
-    id: 'tabletalk',
-    prompt: 'How do you leverage politics at the table?',
+    id: 'comeback',
+    prompt: 'When you fall behind, what is the comeback plan?',
     choices: [
       {
-        label: 'Forge alliances',
-        description: 'Offer protection, share resources, and set up mutual wins.',
-        weights: { white: 3, green: 1 },
+        key: 'A',
+        label: 'A. Establish layered defenses',
+        description: 'Board wipes, protection, and clean answers reset the pace in your favor.',
       },
       {
-        label: 'Negotiate information',
-        description: 'Bluff, reveal, and manipulate the stack to your favor.',
-        weights: { blue: 2, black: 1 },
+        key: 'B',
+        label: 'B. Lean on inevitability from the graveyard',
+        description: 'Value engines recycle key permanents until you reassemble your engine.',
       },
       {
-        label: 'Threaten retaliation',
-        description: 'Promise retribution and punish anyone who crosses you.',
-        weights: { black: 2, red: 2 },
-      },
-      {
-        label: 'Start fireworks',
-        description: 'Encourage brawls and keep the game lively.',
-        weights: { red: 3, green: 1 },
+        key: 'C',
+        label: 'C. Intimidate the table with explosive plays',
+        description: 'Revenge triggers and burn make opponents think twice about finishing you off.',
       },
     ],
   },
   {
-    id: 'aesthetics',
-    prompt: 'Pick the deck aesthetic that excites you most.',
+    id: 'toolkit',
+    prompt: 'What is your Commander toolkit without fail?',
     choices: [
       {
-        label: 'Knights, angels, and community unity',
-        description: 'March in formation and support your allies.',
-        weights: { white: 3 },
+        key: 'A',
+        label: 'A. Tutors for enchantments and utility creatures',
+        description: 'You ensure the right silver bullets are always within reach.',
       },
       {
-        label: 'Artifacts, knowledge, and arcane mastery',
-        description: 'Assemble engines, tinker with combos, and outthink opponents.',
-        weights: { blue: 3 },
+        key: 'B',
+        label: 'B. Instant-speed tricks and spell copying',
+        description: 'You stockpile reactive tools that scale with every cast.',
       },
       {
-        label: 'Demons, zombies, and gothic ambition',
-        description: 'Command the macabre and weaponize the grave.',
-        weights: { black: 3 },
-      },
-      {
-        label: 'Dragons, elementals, and wild beasts',
-        description: 'Let instinct guide you to a triumphant roar.',
-        weights: { red: 2, green: 2 },
+        key: 'C',
+        label: 'C. Ramp, haste, and combat upgrades',
+        description: 'Mana bursts and battle-ready boosters keep your threats lethal.',
       },
     ],
   },
 ];
+
+const scoringMap: Record<string, Record<ChoiceKey, Color[]>> = {
+  opening_hand: {
+    A: ['white', 'blue'],
+    B: ['blue', 'black'],
+    C: ['red', 'green'],
+  },
+  midgame_plan: {
+    A: ['white', 'green'],
+    B: ['blue', 'red'],
+    C: ['black', 'red'],
+  },
+  win_condition: {
+    A: ['white', 'black'],
+    B: ['white', 'red'],
+    C: ['black', 'green'],
+  },
+  table_politics: {
+    A: ['white', 'blue'],
+    B: ['green', 'blue'],
+    C: ['black', 'red'],
+  },
+  problem_solving: {
+    A: ['white', 'green'],
+    B: ['blue', 'black'],
+    C: ['red', 'green'],
+  },
+  deck_aesthetic: {
+    A: ['white', 'black'],
+    B: ['green', 'blue'],
+    C: ['white', 'red'],
+  },
+  comeback: {
+    A: ['white', 'blue'],
+    B: ['black', 'green'],
+    C: ['black', 'red'],
+  },
+  toolkit: {
+    A: ['white', 'green'],
+    B: ['blue', 'red'],
+    C: ['red', 'green'],
+  },
+};
 
 const commanderRecommendations: Record<string, CommanderRecommendation> = {
   W: {
@@ -514,7 +519,7 @@ function resolveCommander(identityKey: string, colors: Color[]): CommanderRecomm
   };
 }
 
-function aggregateScores(answers: Record<string, number>): Record<Color, number> {
+function aggregateScores(answers: Record<string, ChoiceKey>): Record<Color, number> {
   const totals: Record<Color, number> = {
     white: 0,
     blue: 0,
@@ -523,12 +528,11 @@ function aggregateScores(answers: Record<string, number>): Record<Color, number>
     green: 0,
   };
 
-  for (const question of questions) {
-    const choiceIndex = answers[question.id];
-    if (choiceIndex === undefined) continue;
-    const choice = question.choices[choiceIndex];
-    for (const [color, weight] of Object.entries(choice.weights)) {
-      totals[color as Color] += weight ?? 0;
+  for (const [questionId, choiceKey] of Object.entries(answers)) {
+    const colorPair = scoringMap[questionId]?.[choiceKey];
+    if (!colorPair) continue;
+    for (const color of colorPair) {
+      totals[color] += 1;
     }
   }
 
@@ -558,10 +562,10 @@ function formatIdentityLabel(colors: Color[]): string {
   return colors.map((color) => colorDetails[color].label).join(' / ');
 }
 
-const initialAnswers: Record<string, number> = {};
+const initialAnswers: Record<string, ChoiceKey> = {};
 
 function MTGColorArchetypeQuiz() {
-  const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers);
+  const [answers, setAnswers] = useState<Record<string, ChoiceKey>>(initialAnswers);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -572,8 +576,8 @@ function MTGColorArchetypeQuiz() {
 
   const scores = useMemo(() => aggregateScores(answers), [answers]);
 
-  function handleSelect(questionId: string, choiceIndex: number) {
-    setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }));
+  function handleSelect(questionId: string, choiceKey: ChoiceKey) {
+    setAnswers((prev) => ({ ...prev, [questionId]: choiceKey }));
     setError(null);
   }
 
@@ -631,13 +635,13 @@ function MTGColorArchetypeQuiz() {
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                {question.choices.map((choice, index) => {
-                  const isActive = selected === index;
+                {question.choices.map((choice) => {
+                  const isActive = selected === choice.key;
                   return (
                     <button
-                      key={choice.label}
+                      key={choice.key}
                       type="button"
-                      onClick={() => handleSelect(question.id, index)}
+                      onClick={() => handleSelect(question.id, choice.key)}
                       className={`group flex flex-col items-start gap-2 rounded-xl border px-4 py-4 text-left transition hover:border-primary/70 hover:bg-slate-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                         isActive ? 'border-primary/80 bg-slate-800/80 shadow-lg' : 'border-slate-800/80'
                       }`}
