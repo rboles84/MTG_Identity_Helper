@@ -574,7 +574,7 @@ function isChoiceKey(value: unknown): value is ChoiceKey {
 
 const initialAnswers: AnswerMap = {};
 
-const STORAGE_KEY = 'mtg-color-archetype-answers';
+type AnswerMap = Record<string, ChoiceKey>;
 
 const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = [
   {
@@ -585,21 +585,21 @@ const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = 
       midgame_plan: 'A',
       win_condition: 'A',
       table_politics: 'A',
-      problem_solving: 'B',
-      deck_aesthetic: 'B',
+      problem_solving: 'A',
+      deck_aesthetic: 'A',
       comeback: 'A',
-      toolkit: 'B',
+      toolkit: 'A',
     },
   },
   {
     id: 'rakdos-aristocrats',
     label: 'Rakdos Aristocrats (B/R)',
     answers: {
-      opening_hand: 'B',
+      opening_hand: 'C',
       midgame_plan: 'C',
       win_condition: 'C',
       table_politics: 'C',
-      problem_solving: 'B',
+      problem_solving: 'C',
       deck_aesthetic: 'C',
       comeback: 'C',
       toolkit: 'C',
@@ -614,14 +614,14 @@ const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = 
       win_condition: 'B',
       table_politics: 'B',
       problem_solving: 'A',
-      deck_aesthetic: 'A',
+      deck_aesthetic: 'B',
       comeback: 'B',
       toolkit: 'A',
     },
   },
 ];
 
-function sanitizeAnswers(candidate: Partial<Record<string, unknown>>): AnswerMap {
+function sanitizeAnswers(candidate: Partial<Record<string, ChoiceKey>> | null | undefined): AnswerMap {
   const sanitized: AnswerMap = {};
 
   if (!candidate) {
@@ -630,8 +630,11 @@ function sanitizeAnswers(candidate: Partial<Record<string, unknown>>): AnswerMap
 
   for (const question of questions) {
     const value = candidate[question.id];
-    if (isChoiceKey(value)) {
-      sanitized[question.id] = value;
+    if (typeof value === 'string') {
+      const validKeys = new Set(question.choices.map((choice) => choice.key));
+      if (validKeys.has(value as ChoiceKey)) {
+        sanitized[question.id] = value as ChoiceKey;
+      }
     }
   }
 
@@ -654,7 +657,7 @@ function decodeAnswersFromHashString(encoded: string): AnswerMap | null {
 
   try {
     const json = decodeURIComponent(window.atob(encoded));
-    const parsed = JSON.parse(json) as Partial<Record<string, unknown>>;
+    const parsed = JSON.parse(json) as Partial<Record<string, ChoiceKey>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
@@ -673,7 +676,7 @@ function loadAnswersFromLocalStorage(): AnswerMap | null {
       return null;
     }
 
-    const parsed = JSON.parse(stored) as Partial<Record<string, unknown>>;
+    const parsed = JSON.parse(stored) as Partial<Record<string, ChoiceKey>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
