@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Card,
@@ -560,10 +560,193 @@ function formatIdentityLabel(colors: Color[]): string {
 
 const initialAnswers: Record<string, number> = {};
 
+const STORAGE_KEY = 'mtg-color-archetype-answers';
+
+type AnswerMap = Record<string, number>;
+
+const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = [
+  {
+    id: 'azorius-control',
+    label: 'Azorius Control (W/U)',
+    answers: {
+      tempo: 0,
+      interaction: 0,
+      resource: 1,
+      table: 0,
+      wincon: 0,
+      risk: 0,
+      tabletalk: 0,
+      aesthetics: 1,
+    },
+  },
+  {
+    id: 'rakdos-aristocrats',
+    label: 'Rakdos Aristocrats (B/R)',
+    answers: {
+      tempo: 2,
+      interaction: 2,
+      resource: 2,
+      table: 2,
+      wincon: 2,
+      risk: 2,
+      tabletalk: 2,
+      aesthetics: 2,
+    },
+  },
+  {
+    id: 'selesnya-ramp',
+    label: 'Selesnya Ramp (W/G)',
+    answers: {
+      tempo: 3,
+      interaction: 0,
+      resource: 0,
+      table: 3,
+      wincon: 3,
+      risk: 3,
+      tabletalk: 0,
+      aesthetics: 0,
+    },
+  },
+];
+
+function sanitizeAnswers(candidate: Partial<Record<string, number>>): AnswerMap {
+  const sanitized: AnswerMap = {};
+
+  if (!candidate) {
+    return sanitized;
+  }
+
+  for (const question of questions) {
+    const value = candidate[question.id];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      sanitized[question.id] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+function encodeAnswersToHashString(answers: AnswerMap): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const json = JSON.stringify(answers);
+  return window.btoa(encodeURIComponent(json));
+}
+
+function decodeAnswersFromHashString(encoded: string): AnswerMap | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const json = decodeURIComponent(window.atob(encoded));
+    const parsed = JSON.parse(json) as Partial<Record<string, number>>;
+    const sanitized = sanitizeAnswers(parsed);
+    return Object.keys(sanitized).length ? sanitized : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function loadAnswersFromLocalStorage(): AnswerMap | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      return null;
+    }
+
+    const parsed = JSON.parse(stored) as Partial<Record<string, number>>;
+    const sanitized = sanitizeAnswers(parsed);
+    return Object.keys(sanitized).length ? sanitized : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function buildShareableLink(answers: AnswerMap): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const sanitized = sanitizeAnswers(answers);
+  const encoded = Object.keys(sanitized).length ? encodeAnswersToHashString(sanitized) : '';
+  const { origin, pathname, search } = window.location;
+  return `${origin}${pathname}${search}${encoded ? `#${encoded}` : ''}`;
+}
+
 function MTGColorArchetypeQuiz() {
   const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const hashValue = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+
+    if (hashValue) {
+      const decoded = decodeAnswersFromHashString(hashValue);
+      if (decoded) {
+        setAnswers(decoded);
+        return;
+      }
+    }
+
+    const stored = loadAnswersFromLocalStorage();
+    if (stored) {
+      setAnswers(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const sanitized = sanitizeAnswers(answers);
+    const hasAnswers = Object.keys(sanitized).length > 0;
+
+    if (hasAnswers) {
+      const encoded = encodeAnswersToHashString(sanitized);
+      if (window.location.hash.slice(1) !== encoded) {
+        const { pathname, search } = window.location;
+        window.history.replaceState(null, '', `${pathname}${search}#${encoded}`);
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    } else {
+      if (window.location.hash) {
+        const { pathname, search } = window.location;
+        window.history.replaceState(null, '', `${pathname}${search}`);
+      }
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [answers]);
+
+  useEffect(() => {
+    if (!status || typeof window === 'undefined') {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setStatus(null);
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [status]);
 
   const progress = useMemo(() => {
     const totalAnswered = Object.keys(answers).length;
@@ -575,6 +758,7 @@ function MTGColorArchetypeQuiz() {
   function handleSelect(questionId: string, choiceIndex: number) {
     setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }));
     setError(null);
+    setStatus(null);
   }
 
   function handleSubmit() {
@@ -594,6 +778,91 @@ function MTGColorArchetypeQuiz() {
     setAnswers({});
     setResult(null);
     setError(null);
+    setStatus('Quiz reset. Start fresh!');
+  }
+
+  async function handleCopyShareLink() {
+    if (Object.keys(answers).length === 0) {
+      setStatus('Select some answers to generate a shareable link.');
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const link = buildShareableLink(answers);
+
+    try {
+      let copied = false;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+        copied = true;
+      } else if (typeof document !== 'undefined') {
+        const textArea = document.createElement('textarea');
+        textArea.value = link;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        copied = true;
+      }
+
+      if (!copied) {
+        throw new Error('Clipboard unavailable');
+      }
+
+      setStatus('Shareable link copied to clipboard.');
+    } catch (error) {
+      setStatus(`Copy failed. You can manually copy this link: ${link}`);
+    }
+  }
+
+  function handleExportResult() {
+    if (!result) {
+      setStatus('Reveal your identity before exporting results.');
+      return;
+    }
+
+    if (typeof document === 'undefined' || typeof URL === 'undefined') {
+      setStatus('Export is not supported in this environment.');
+      return;
+    }
+
+    const payload = {
+      answers: sanitizeAnswers(answers),
+      scores,
+      result,
+    };
+
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'mtg-color-identity-result.json';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    setStatus('Result exported as JSON.');
+  }
+
+  function handleApplyPreset() {
+    const preset = PRESET_ANSWER_SETS.find((option) => option.id === selectedPresetId);
+    if (!preset) {
+      setStatus('Choose a preset to load answers.');
+      return;
+    }
+
+    setAnswers({ ...preset.answers });
+    setResult(null);
+    setError(null);
+    setStatus(`Loaded preset answers: ${preset.label}.`);
   }
 
   return (
@@ -653,8 +922,45 @@ function MTGColorArchetypeQuiz() {
         })}
         {error ? <p className="text-sm font-medium text-red-400">{error}</p> : null}
       </CardContent>
-      <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:justify-between">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+      <CardFooter className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={handleCopyShareLink}
+            className="flex-1 rounded-lg border border-slate-700/80 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:border-slate-500 hover:text-slate-200"
+          >
+            Copy Share Link
+          </button>
+          <button
+            type="button"
+            onClick={handleExportResult}
+            className="flex-1 rounded-lg border border-slate-700/80 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:border-slate-500 hover:text-slate-200"
+          >
+            Export Result JSON
+          </button>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            value={selectedPresetId}
+            onChange={(event) => setSelectedPresetId(event.target.value)}
+            className="flex-1 rounded-lg border border-slate-800/80 bg-slate-900 px-4 py-2 text-sm text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <option value="">Sample answer strings</option>
+            {PRESET_ANSWER_SETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleApplyPreset}
+            className="rounded-lg border border-slate-700/80 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:border-slate-500 hover:text-slate-200"
+          >
+            Load Answers
+          </button>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={handleReset}
@@ -670,6 +976,7 @@ function MTGColorArchetypeQuiz() {
             Reveal Identity
           </button>
         </div>
+        {status ? <p className="text-sm font-medium text-primary/90">{status}</p> : null}
       </CardFooter>
       {result ? (
         <div className="space-y-6 border-t border-slate-800/50 bg-slate-950/80 p-6">
