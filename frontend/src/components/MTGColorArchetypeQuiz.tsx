@@ -281,6 +281,8 @@ const scoringMap: Record<string, Record<ChoiceKey, Color[]>> = {
   },
 };
 
+const STORAGE_KEY = 'mtg-quiz-answers';
+
 const commanderRecommendations: Record<string, CommanderRecommendation> = {
   W: {
     identity: 'W',
