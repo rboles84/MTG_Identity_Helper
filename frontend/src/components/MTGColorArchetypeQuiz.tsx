@@ -519,7 +519,7 @@ function resolveCommander(identityKey: string, colors: Color[]): CommanderRecomm
   };
 }
 
-function aggregateScores(answers: Record<string, ChoiceKey>): Record<Color, number> {
+function aggregateScores(answers: AnswerMap): Record<Color, number> {
   const totals: Record<Color, number> = {
     white: 0,
     blue: 0,
@@ -529,7 +529,11 @@ function aggregateScores(answers: Record<string, ChoiceKey>): Record<Color, numb
   };
 
   for (const [questionId, choiceKey] of Object.entries(answers)) {
-    const colorPair = scoringMap[questionId]?.[choiceKey];
+    if (!isChoiceKey(choiceKey)) {
+      continue;
+    }
+
+    const colorPair = scoringMap[questionId as keyof typeof scoringMap]?.[choiceKey];
     if (!colorPair) continue;
     for (const color of colorPair) {
       totals[color] += 1;
@@ -562,9 +566,13 @@ function formatIdentityLabel(colors: Color[]): string {
   return colors.map((color) => colorDetails[color].label).join(' / ');
 }
 
-const initialAnswers: Record<string, ChoiceKey> = {};
+type AnswerMap = Partial<Record<string, ChoiceKey>>;
 
-const STORAGE_KEY = 'mtg-color-archetype-answers';
+function isChoiceKey(value: unknown): value is ChoiceKey {
+  return value === 'A' || value === 'B' || value === 'C';
+}
+
+const initialAnswers: AnswerMap = {};
 
 type AnswerMap = Record<string, ChoiceKey>;
 
@@ -688,7 +696,7 @@ function buildShareableLink(answers: AnswerMap): string {
 }
 
 function MTGColorArchetypeQuiz() {
-  const [answers, setAnswers] = useState<Record<string, ChoiceKey>>(initialAnswers);
+  const [answers, setAnswers] = useState<AnswerMap>(initialAnswers);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
