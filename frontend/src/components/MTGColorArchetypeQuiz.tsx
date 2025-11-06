@@ -519,7 +519,7 @@ function resolveCommander(identityKey: string, colors: Color[]): CommanderRecomm
   };
 }
 
-function aggregateScores(answers: Record<string, ChoiceKey>): Record<Color, number> {
+function aggregateScores(answers: AnswerMap): Record<Color, number> {
   const totals: Record<Color, number> = {
     white: 0,
     blue: 0,
@@ -529,7 +529,11 @@ function aggregateScores(answers: Record<string, ChoiceKey>): Record<Color, numb
   };
 
   for (const [questionId, choiceKey] of Object.entries(answers)) {
-    const colorPair = scoringMap[questionId]?.[choiceKey];
+    if (!isChoiceKey(choiceKey)) {
+      continue;
+    }
+
+    const colorPair = scoringMap[questionId as keyof typeof scoringMap]?.[choiceKey];
     if (!colorPair) continue;
     for (const color of colorPair) {
       totals[color] += 1;
@@ -562,58 +566,62 @@ function formatIdentityLabel(colors: Color[]): string {
   return colors.map((color) => colorDetails[color].label).join(' / ');
 }
 
-const initialAnswers: Record<string, ChoiceKey> = {};
+type AnswerMap = Partial<Record<string, ChoiceKey>>;
+
+function isChoiceKey(value: unknown): value is ChoiceKey {
+  return value === 'A' || value === 'B' || value === 'C';
+}
+
+const initialAnswers: AnswerMap = {};
 
 const STORAGE_KEY = 'mtg-color-archetype-answers';
-
-type AnswerMap = Record<string, number>;
 
 const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = [
   {
     id: 'azorius-control',
     label: 'Azorius Control (W/U)',
     answers: {
-      tempo: 0,
-      interaction: 0,
-      resource: 1,
-      table: 0,
-      wincon: 0,
-      risk: 0,
-      tabletalk: 0,
-      aesthetics: 1,
+      opening_hand: 'A',
+      midgame_plan: 'A',
+      win_condition: 'A',
+      table_politics: 'A',
+      problem_solving: 'B',
+      deck_aesthetic: 'B',
+      comeback: 'A',
+      toolkit: 'B',
     },
   },
   {
     id: 'rakdos-aristocrats',
     label: 'Rakdos Aristocrats (B/R)',
     answers: {
-      tempo: 2,
-      interaction: 2,
-      resource: 2,
-      table: 2,
-      wincon: 2,
-      risk: 2,
-      tabletalk: 2,
-      aesthetics: 2,
+      opening_hand: 'B',
+      midgame_plan: 'C',
+      win_condition: 'C',
+      table_politics: 'C',
+      problem_solving: 'B',
+      deck_aesthetic: 'C',
+      comeback: 'C',
+      toolkit: 'C',
     },
   },
   {
     id: 'selesnya-ramp',
     label: 'Selesnya Ramp (W/G)',
     answers: {
-      tempo: 3,
-      interaction: 0,
-      resource: 0,
-      table: 3,
-      wincon: 3,
-      risk: 3,
-      tabletalk: 0,
-      aesthetics: 0,
+      opening_hand: 'A',
+      midgame_plan: 'A',
+      win_condition: 'B',
+      table_politics: 'B',
+      problem_solving: 'A',
+      deck_aesthetic: 'A',
+      comeback: 'B',
+      toolkit: 'A',
     },
   },
 ];
 
-function sanitizeAnswers(candidate: Partial<Record<string, number>>): AnswerMap {
+function sanitizeAnswers(candidate: Partial<Record<string, unknown>>): AnswerMap {
   const sanitized: AnswerMap = {};
 
   if (!candidate) {
@@ -622,7 +630,7 @@ function sanitizeAnswers(candidate: Partial<Record<string, number>>): AnswerMap 
 
   for (const question of questions) {
     const value = candidate[question.id];
-    if (typeof value === 'number' && Number.isFinite(value)) {
+    if (isChoiceKey(value)) {
       sanitized[question.id] = value;
     }
   }
@@ -646,7 +654,7 @@ function decodeAnswersFromHashString(encoded: string): AnswerMap | null {
 
   try {
     const json = decodeURIComponent(window.atob(encoded));
-    const parsed = JSON.parse(json) as Partial<Record<string, number>>;
+    const parsed = JSON.parse(json) as Partial<Record<string, unknown>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
@@ -665,7 +673,7 @@ function loadAnswersFromLocalStorage(): AnswerMap | null {
       return null;
     }
 
-    const parsed = JSON.parse(stored) as Partial<Record<string, number>>;
+    const parsed = JSON.parse(stored) as Partial<Record<string, unknown>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
@@ -685,7 +693,7 @@ function buildShareableLink(answers: AnswerMap): string {
 }
 
 function MTGColorArchetypeQuiz() {
-  const [answers, setAnswers] = useState<Record<string, ChoiceKey>>(initialAnswers);
+  const [answers, setAnswers] = useState<AnswerMap>(initialAnswers);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
