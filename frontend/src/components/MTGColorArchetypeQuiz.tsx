@@ -566,54 +566,54 @@ const initialAnswers: Record<string, ChoiceKey> = {};
 
 const STORAGE_KEY = 'mtg-color-archetype-answers';
 
-type AnswerMap = Record<string, number>;
+type AnswerMap = Record<string, ChoiceKey>;
 
 const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = [
   {
     id: 'azorius-control',
     label: 'Azorius Control (W/U)',
     answers: {
-      tempo: 0,
-      interaction: 0,
-      resource: 1,
-      table: 0,
-      wincon: 0,
-      risk: 0,
-      tabletalk: 0,
-      aesthetics: 1,
+      opening_hand: 'A',
+      midgame_plan: 'A',
+      win_condition: 'A',
+      table_politics: 'A',
+      problem_solving: 'A',
+      deck_aesthetic: 'A',
+      comeback: 'A',
+      toolkit: 'A',
     },
   },
   {
     id: 'rakdos-aristocrats',
     label: 'Rakdos Aristocrats (B/R)',
     answers: {
-      tempo: 2,
-      interaction: 2,
-      resource: 2,
-      table: 2,
-      wincon: 2,
-      risk: 2,
-      tabletalk: 2,
-      aesthetics: 2,
+      opening_hand: 'C',
+      midgame_plan: 'C',
+      win_condition: 'C',
+      table_politics: 'C',
+      problem_solving: 'C',
+      deck_aesthetic: 'C',
+      comeback: 'C',
+      toolkit: 'C',
     },
   },
   {
     id: 'selesnya-ramp',
     label: 'Selesnya Ramp (W/G)',
     answers: {
-      tempo: 3,
-      interaction: 0,
-      resource: 0,
-      table: 3,
-      wincon: 3,
-      risk: 3,
-      tabletalk: 0,
-      aesthetics: 0,
+      opening_hand: 'A',
+      midgame_plan: 'A',
+      win_condition: 'B',
+      table_politics: 'B',
+      problem_solving: 'A',
+      deck_aesthetic: 'B',
+      comeback: 'B',
+      toolkit: 'A',
     },
   },
 ];
 
-function sanitizeAnswers(candidate: Partial<Record<string, number>>): AnswerMap {
+function sanitizeAnswers(candidate: Partial<Record<string, ChoiceKey>> | null | undefined): AnswerMap {
   const sanitized: AnswerMap = {};
 
   if (!candidate) {
@@ -622,8 +622,11 @@ function sanitizeAnswers(candidate: Partial<Record<string, number>>): AnswerMap 
 
   for (const question of questions) {
     const value = candidate[question.id];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      sanitized[question.id] = value;
+    if (typeof value === 'string') {
+      const validKeys = new Set(question.choices.map((choice) => choice.key));
+      if (validKeys.has(value as ChoiceKey)) {
+        sanitized[question.id] = value as ChoiceKey;
+      }
     }
   }
 
@@ -646,7 +649,7 @@ function decodeAnswersFromHashString(encoded: string): AnswerMap | null {
 
   try {
     const json = decodeURIComponent(window.atob(encoded));
-    const parsed = JSON.parse(json) as Partial<Record<string, number>>;
+    const parsed = JSON.parse(json) as Partial<Record<string, ChoiceKey>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
@@ -665,7 +668,7 @@ function loadAnswersFromLocalStorage(): AnswerMap | null {
       return null;
     }
 
-    const parsed = JSON.parse(stored) as Partial<Record<string, number>>;
+    const parsed = JSON.parse(stored) as Partial<Record<string, ChoiceKey>>;
     const sanitized = sanitizeAnswers(parsed);
     return Object.keys(sanitized).length ? sanitized : null;
   } catch (error) {
