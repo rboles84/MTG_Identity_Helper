@@ -39,6 +39,8 @@ type Result = {
   commander: CommanderRecommendation;
 };
 
+type AnswerMap = Partial<Record<string, ChoiceKey>>;
+
 const colorDetails: Record<Color, { label: string; gradient: string; description: string }> = {
   white: {
     label: 'White',
@@ -568,15 +570,11 @@ function formatIdentityLabel(colors: Color[]): string {
   return colors.map((color) => colorDetails[color].label).join(' / ');
 }
 
-type AnswerMap = Partial<Record<string, ChoiceKey>>;
-
 function isChoiceKey(value: unknown): value is ChoiceKey {
   return value === 'A' || value === 'B' || value === 'C';
 }
 
 const initialAnswers: AnswerMap = {};
-
-type AnswerMap = Record<string, ChoiceKey>;
 
 const PRESET_ANSWER_SETS: { id: string; label: string; answers: AnswerMap }[] = [
   {
